@@ -66,7 +66,10 @@
 (defn del
   [client key]
   (let [hmap (get-hmap client)
-        builder (.delete (:zk client))
+        builder (.setData (:zk client))
         path (mk-path (:service client))]
-    (-> builder (.forPath path))
+    (-> builder
+      (.forPath path
+                (utf8-byte-array
+                  (json/encode (dissoc hmap key)))))
     ))
