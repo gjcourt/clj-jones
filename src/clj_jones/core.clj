@@ -33,26 +33,40 @@
          ~@body
          ))))
 
-(defn mk-path
+(defn mk-conf-path
   [service]
   (str "/services/" service "/conf"))
 
 (defn- get-hmap
   ([client]
     (let [builder (.getData (:zk client))
-          path (mk-path (:service client))]
+          path (mk-conf-path (:service client))]
       (json/decode
         (apply str (map char (-> builder
                                (.forPath path))))
         )))
   ([client handler]
     (let [builder (.getData (:zk client))
-          path (mk-path (:service client))]
+          path (mk-conf-path (:service client))]
       (json/decode
         (apply str (map char (-> builder
                                (.usingWatcher handler)
                                (.forPath path)))))
       )))
+
+; (defmacro ghmap
+;   [client & [handler]]
+;   (let [watch-handler-wrapper
+;         (if handler
+;           (fn [builder] ((memfn usingWatcher) builder handler))
+;           (fn [builder] builder))]
+;     `(let [builder# (.getData (:zk ~client))
+;            path# (mk-conf-path (:service ~client))]
+;        (json/decode
+;          (apply str (map char (-> builder#
+;                                 ~watch-handler-wrapper
+;                                 (.forPath path#))))))
+;     ))
 
 (defn get
   ([client key]
@@ -67,7 +81,7 @@
   [client key value]
   (let [hmap (get-hmap client)
         builder (.setData (:zk client))
-        path (mk-path (:service client))]
+        path (mk-conf-path (:service client))]
     (-> builder
       (.forPath path
                 (utf8-byte-array
@@ -78,7 +92,7 @@
   [client key value]
   (let [hmap (get-hmap client)
         builder (.create (:zk client))
-        path (mk-path (:service client))]
+        path (mk-conf-path (:service client))]
     (-> builder
       ; (.usingWatcher (WatchHandler.))
       (.creatingParentsIfNeeded
@@ -91,12 +105,9 @@
   [client key]
   (let [hmap (get-hmap client)
         builder (.setData (:zk client))
-        path (mk-path (:service client))]
+        path (mk-conf-path (:service client))]
     (-> builder
       (.forPath path
                 (utf8-byte-array
                   (json/encode (dissoc hmap key)))))
     ))
-
-(def jones
-  (mk-jones-client ["localhost"] [2181] "storm"))
