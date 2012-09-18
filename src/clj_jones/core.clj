@@ -1,113 +1,30 @@
 (ns clj-jones.core
-  (:import [com.netflix.curator.framework CuratorFrameworkFactory])
-  (:import [com.netflix.curator.framework.api CuratorWatcher])
-  (:import [com.netflix.curator.retry RetryUntilElapsed])
-  (:require [clojure.contrib.io :as io])
-  (:require [clojure.contrib.string :as string])
-  (:require [cheshire.core :as json])
+  (:require [clj-jones.protocol :as protocol])
+  (:require [clj-jones.cache :as jcache])
+  (:use [clj-jones.util])
   )
 
-(defn utf8-byte-array
-  [string]
-  (io/to-byte-array string))
-
-(defn mk-jones-client
+(defn mk-jones
   [hosts ports service]
-  (let [hostports (string/join "," (map #(string/join ":" %&)
-                                        hosts
-                                        ports))
-        policy (RetryUntilElapsed. (int 500) (int 50))
-        client (CuratorFrameworkFactory/newClient hostports policy)]
-    (.start client)
-    {:zk client
-     :service service}
-    ))
+  (protocol/mk-jones hosts ports service))
 
-(defmacro mk-handler
-  [& body]
-  `(reify CuratorWatcher
-     (process [this# event#]
-       (let [~'event {:state (.getState event#)
-                      :path (.getPath event#)
-                      :type (.getType event#)}]
-         ~@body
-         ))))
+(defn mk-cache
+  [jones]
+  (jcache/mk-cache jones))
 
-(defn mk-conf-path
-  [service]
-  (str "/services/" service "/conf"))
-
-(defn- get-hmap
-  ([client]
-    (let [builder (.getData (:zk client))
-          path (mk-conf-path (:service client))]
-      (json/decode
-        (apply str (map char (-> builder
-                               (.forPath path))))
-        )))
-  ([client handler]
-    (let [builder (.getData (:zk client))
-          path (mk-conf-path (:service client))]
-      (json/decode
-        (apply str (map char (-> builder
-                               (.usingWatcher handler)
-                               (.forPath path)))))
-      )))
-
-; (defmacro ghmap
-;   [client & [handler]]
-;   (let [watch-handler-wrapper
-;         (if handler
-;           (fn [builder] ((memfn usingWatcher) builder handler))
-;           (fn [builder] builder))]
-;     `(let [builder# (.getData (:zk ~client))
-;            path# (mk-conf-path (:service ~client))]
-;        (json/decode
-;          (apply str (map char (-> builder#
-;                                 ~watch-handler-wrapper
-;                                 (.forPath path#))))))
-;     ))
+(def e (atom nil))
+; NOTE testing
+(defonce jones (mk-jones ["localhost"] [2181] "storm"))
+(defonce cache (mk-cache jones))
+(jcache/add-listener! jones cache (reset! e event))
+(println "Num listeners" (.size (.getListenable cache)))
 
 (defn get
-  ([client key]
-   (let [hmap (get-hmap client)]
-     (hmap key)))
-  ([client key handler]
-   (let [hmap (get-hmap client handler)]
-     (hmap key)
-     )))
+  [jones key]
+  (let [hmap (get-data jones)]
+    (hmap key)))
 
 (defn set
-  [client key value]
-  (let [hmap (get-hmap client)
-        builder (.setData (:zk client))
-        path (mk-conf-path (:service client))]
-    (-> builder
-      (.forPath path
-                (utf8-byte-array
-                  (json/encode (assoc hmap key value)))))
-    ))
-
-(defn create
-  [client key value]
-  (let [hmap (get-hmap client)
-        builder (.create (:zk client))
-        path (mk-conf-path (:service client))]
-    (-> builder
-      ; (.usingWatcher (WatchHandler.))
-      (.creatingParentsIfNeeded
-        (.forPath path
-                  (utf8-byte-array
-                    (json/encode (assoc hmap key value))))))
-    ))
-
-(defn del
-  [client key]
-  (let [hmap (get-hmap client)
-        builder (.setData (:zk client))
-        path (mk-conf-path (:service client))]
-    (-> builder
-      (.forPath path
-                (utf8-byte-array
-                  (json/encode (dissoc hmap key)))))
-    ))
+  [jones key value]
+  (let [hmap (get-data jones)]
+    (set-data! jones (assoc hmap key value))))
