@@ -5,12 +5,12 @@
 
 (defalias defjones api/defjones)
 
-(defn get
+(defn get-key
   [jones key]
   (let [hmap (get-data jones)]
     (hmap key)))
 
-(defn set
+(defn set-key
   [jones key value]
   (let [hmap (get-data jones)]
     (set-data! jones (assoc hmap key value))))
