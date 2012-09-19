@@ -65,13 +65,23 @@
       (.forPath path data))
     ))
 
-(defn get-data
-  [jones]
-  (deserialize (zk-get jones)))
-
 (defn set-data!
   [jones data]
-  (zk-set! jones (serialize data)))
+  (let [sdata (serialize data)]
+    (try
+      (zk-set! jones sdata)
+      (catch Exception ex
+        (zk-create! jones (serialize {}))
+        (zk-set! jones sdata))
+      )))
+
+(defn get-data
+  [jones]
+  (try
+    (deserialize (zk-get jones))
+    (catch Exception ex
+      {}
+      )))
 
 (defn- del
   [jones key]

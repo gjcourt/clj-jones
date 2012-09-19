@@ -1,4 +1,4 @@
-(defproject clj-jones "0.0.1-SNAPSHOT"
+(defproject com.gjcourt/clj-jones "0.0.1-wip1"
   :main clj-jones.core
   :description "Clojure client for Jones"
   :dependencies [[org.clojure/clojure "1.3.0"]
