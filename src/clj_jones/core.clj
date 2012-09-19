@@ -14,6 +14,3 @@
   [jones key value]
   (let [hmap (get-data jones)]
     (set-data! jones (assoc hmap key value))))
-
-(defjones jones ["stats" "localhost" 2181]
-          )

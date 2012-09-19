@@ -35,7 +35,7 @@
   (str (mk-parent-path service) "/conf"))
 
 (defn maybe-vector [s]
-  (if-not (seq? s) (vector s) s))
+  (if-not (vector? s) (vector s) s))
 
 (defn serialize [data]
   (utf8-byte-array (json/encode data)))
