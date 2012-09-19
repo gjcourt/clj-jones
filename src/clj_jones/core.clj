@@ -14,10 +14,3 @@
   [jones key value]
   (let [hmap (get-data jones)]
     (set-data! jones (assoc hmap key value))))
-
-; NOTE test
-; (def e (atom nil))
-; ; (defjones jones1 ["storm" "localhost" 2181])
-; (defjones jones2 ["storm" "localhost" 2181]
-;   (reset! e event)
-;   (println "TRIGGERED"))

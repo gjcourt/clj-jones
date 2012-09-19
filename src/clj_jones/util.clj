@@ -37,21 +37,6 @@
 (defn maybe-vector [s]
   (if-not (seq? s) (vector s) s))
 
-; (defmacro ghmap
-;   [jones & [handler]]
-;   (let [watch-handler-wrapper
-;         (if handler
-;           (fn [builder] ((memfn usingWatcher) builder handler))
-;           (fn [builder] builder))]
-;     `(let [builder# (.getData (:zk ~jones))
-;            path# (:conf ~jones)]
-;        (json/decode
-;          (apply str (map char (-> builder#
-;                                 ~watch-handler-wrapper
-;                                 (.forPath path#))))))
-;     ))
-
-
 (defn serialize [data]
   (utf8-byte-array (json/encode data)))
 
@@ -76,8 +61,8 @@
   (let [builder (.create (:zk jones))
         path (:conf jones)]
     (-> builder
-      (.creatingParentsIfNeeded
-        (.forPath path data)))
+      .creatingParentsIfNeeded
+      (.forPath path data))
     ))
 
 (defn get-data
@@ -98,4 +83,3 @@
                 (utf8-byte-array
                   (json/encode (dissoc hmap key)))))
     ))
-

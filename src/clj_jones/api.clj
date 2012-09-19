@@ -9,15 +9,6 @@
                                mk-conf-path]])
   )
 
-(defprotocol IJones
-  (zk [this] :zk this)
-  (cache [this] :cache this)
-  )
-
-(defrecord Jones [parent conf]
-  IJones
-  )
-
 (defn mk-curator-retry-policy
   [number & [timeout]]
   (RetryNTimes. (int number)
@@ -35,6 +26,15 @@
     (.start c)
     c))
 
+(defprotocol IJones
+  (zk [this] :zk this)
+  (cache [this] :cache this)
+  )
+
+(defrecord Jones [parent conf]
+  IJones
+  )
+
 (defrecord ChildData [data path stat])
 
 (defmacro defjones
@@ -50,15 +50,17 @@
          curator-client# (mk-curator-client hostports# policy#)
          parent-cache# (mk-parent-cache curator-client# parent-path#)
          jones# (->Jones parent-path# conf-path#)]
-     (-> parent-cache# .getListenable (.addListener
-                                        (reify PathChildrenCacheListener
-                                          (childEvent [this# client# event#]
-                                            (let [cdata# (.getData event#)
-                                                  ~'event {:node (->ChildData (deserialize (.getData cdata#))
-                                                                             (.getPath cdata#)
-                                                                             (.getStat cdata#))
-                                                           :type (.getType event#)}]
-                                              (when (= (-> ~'event :node :path) conf-path#)
-                                                ~@expr))))))
+     (if-not ~(nil? expr)
+       (-> parent-cache# .getListenable (.addListener
+                                          (reify PathChildrenCacheListener
+                                            (childEvent [this# client# event#]
+                                              (let [cdata# (.getData event#)
+                                                    ~'event {:node (->ChildData (deserialize (.getData cdata#))
+                                                                                (.getPath cdata#)
+                                                                                (.getStat cdata#))
+                                                             :type (.getType event#)}]
+                                                (when (= (-> ~'event :node :path) conf-path#)
+                                                  ~@expr))))))
+       )
      (def ~name (assoc jones# :zk curator-client# :cache parent-cache#))
      ))
