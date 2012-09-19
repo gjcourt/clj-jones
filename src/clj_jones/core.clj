@@ -1,23 +1,9 @@
 (ns clj-jones.core
-  (:require [clj-jones.protocol :as protocol])
-  (:require [clj-jones.cache :as jcache])
+  (:require [clj-jones.api :as api])
   (:use [clj-jones.util])
   )
 
-(defn mk-jones
-  [hosts ports service]
-  (protocol/mk-jones hosts ports service))
-
-(defn mk-cache
-  [jones]
-  (jcache/mk-cache jones))
-
-(def e (atom nil))
-; NOTE testing
-(defonce jones (mk-jones ["localhost"] [2181] "storm"))
-(defonce cache (mk-cache jones))
-(jcache/add-listener! jones cache (reset! e event))
-(println "Num listeners" (.size (.getListenable cache)))
+(defalias defjones api/defjones)
 
 (defn get
   [jones key]
@@ -28,3 +14,10 @@
   [jones key value]
   (let [hmap (get-data jones)]
     (set-data! jones (assoc hmap key value))))
+
+; NOTE test
+; (def e (atom nil))
+; ; (defjones jones1 ["storm" "localhost" 2181])
+; (defjones jones2 ["storm" "localhost" 2181]
+;   (reset! e event)
+;   (println "TRIGGERED"))
