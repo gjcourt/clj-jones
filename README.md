@@ -22,8 +22,6 @@ implicit do so feel free to have multiple expressions.
     => "bar2"
     => (set-key jones "foo" "buzz")
     => #<Stat 29,542,1347744967483,1348084140676,76,0,0,0,38,0,29>
-    => TRIGGERED {:node #clj_jones.api.ChildData{:data {bar one, foo buzz, one two}, :path /services/storm/conf, :s
-tat #<Stat 29,542,1347744967483,1348084140676,76,0,0,0,38,0,29
->}, :type #<Type CHILD_UPDATED>}
+    => TRIGGERED {:node #clj_jones.api.ChildData{:data {bar one, foo buzz, one two}, :path /services/storm/conf, :stat #<Stat 29,542,1347744967483,1348084140676,76,0,0,0,38,0,29>}, :type #<Type CHILD_UPDATED>}
 
 Distributed under the Eclipse Public License, the same as Clojure.
