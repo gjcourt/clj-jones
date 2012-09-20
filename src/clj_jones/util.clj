@@ -44,50 +44,43 @@
   (json/decode (apply str (map char data))))
 
 (defn zk-get
-  [jones]
-  (let [builder (.getData (:zk jones))
-        path (:conf jones)]
+  [curator path]
+  (let [builder (.getData curator)]
     (-> builder (.forPath path))))
 
 (defn zk-set!
-  [jones data]
-  (let [builder (.setData (:zk jones))
-        path (:conf jones)]
-    (-> builder
-      (.forPath path data))))
+  [curator path data]
+  (let [builder (.setData curator)]
+    (-> builder (.forPath path data))))
 
 (defn zk-create!
-  [jones data]
-  (let [builder (.create (:zk jones))
-        path (:conf jones)]
-    (-> builder
-      .creatingParentsIfNeeded
-      (.forPath path data))
+  [curator path data]
+  (let [builder (.create curator)]
+    (-> builder .creatingParentsIfNeeded (.forPath path data))
     ))
 
 (defn set-data!
-  [jones data]
+  [curator path data]
   (let [sdata (serialize data)]
     (try
-      (zk-set! jones sdata)
+      (zk-set! curator path sdata)
       (catch Exception ex
-        (zk-create! jones (serialize {}))
-        (zk-set! jones sdata))
+        (zk-create! curator path (serialize {}))
+        (zk-set! curator path sdata))
       )))
 
 (defn get-data
-  [jones]
+  [curator path]
   (try
-    (deserialize (zk-get jones))
+    (deserialize (zk-get curator path))
     (catch Exception ex
       {}
       )))
 
 (defn- del
-  [jones key]
-  (let [hmap (get-data jones)
-        builder (.setData (:zk jones))
-        path (:conf jones)]
+  [curator path key]
+  (let [hmap (get-data path curator)
+        builder (.setData curator)]
     (-> builder
       (.forPath path
                 (utf8-byte-array
