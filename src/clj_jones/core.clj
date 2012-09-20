@@ -3,7 +3,6 @@
   (:import [com.netflix.curator.retry RetryNTimes])
   (:import [com.netflix.curator.framework.recipes.cache PathChildrenCache PathChildrenCacheListener])
   (:require [clojure.contrib.string :as string])
-  (:require [clj-jones.api :as api])
   (:use [clj-jones.util])
   )
 
